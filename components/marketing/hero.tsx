@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { useSession } from "next-auth/react"
 import { Button } from "@/components/ui/button"
-import { ArrowRight, Sparkles } from "lucide-react"
+import { ArrowRight, Sparkles, HelpCircle } from "lucide-react"
 
 export function Hero() {
     const { data: session } = useSession()
@@ -91,6 +91,16 @@ export function Hero() {
                         <div className="text-sm text-muted-foreground">Client Satisfaction</div>
                     </div>
                 </div>
+
+                {/* FAQ Link */}
+                <Link
+                    href="/contact#faq"
+                    className="inline-flex items-center gap-2 mt-6 text-sm text-muted-foreground hover:text-foreground transition-colors group"
+                >
+                    <HelpCircle className="h-4 w-4" />
+                    <span>Have questions? Check our FAQs</span>
+                    <ArrowRight className="h-3 w-3 group-hover:translate-x-1 transition-transform" />
+                </Link>
             </div>
         </section>
     )

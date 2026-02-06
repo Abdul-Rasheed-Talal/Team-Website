@@ -1,60 +1,20 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Briefcase, MapPin, Clock, DollarSign } from "lucide-react"
+import { prisma } from "@/lib/prisma"
 
-// Placeholder job listings (would come from database in production)
-const jobListings = [
-    {
-        id: "1",
-        slug: "senior-frontend-engineer",
-        title: "Senior Frontend Engineer",
-        department: "Engineering",
-        location: "Remote (US/EU)",
-        type: "Full-time",
-        salary: "$150k - $200k",
-        description: "Join our team to build next-generation web applications using React, Next.js, and TypeScript.",
-        requirements: ["5+ years React experience", "TypeScript proficiency", "NextJS expertise"],
-        isActive: true,
-    },
-    {
-        id: "2",
-        slug: "backend-developer",
-        title: "Backend Developer",
-        department: "Engineering",
-        location: "San Francisco, CA",
-        type: "Full-time",
-        salary: "$130k - $180k",
-        description: "Design and implement scalable APIs and microservices using Node.js and PostgreSQL.",
-        requirements: ["Node.js/Python experience", "Database design skills", "API development"],
-        isActive: true,
-    },
-    {
-        id: "3",
-        slug: "devops-engineer",
-        title: "DevOps Engineer",
-        department: "Infrastructure",
-        location: "Remote",
-        type: "Full-time",
-        salary: "$140k - $190k",
-        description: "Manage our cloud infrastructure and CI/CD pipelines for maximum reliability and performance.",
-        requirements: ["AWS/GCP experience", "Kubernetes", "Terraform/IaC"],
-        isActive: true,
-    },
-    {
-        id: "4",
-        slug: "product-design-intern",
-        title: "Product Design Intern",
-        department: "Design",
-        location: "San Francisco, CA",
-        type: "Internship",
-        salary: "$45/hr",
-        description: "Learn from our design team while contributing to real product features.",
-        requirements: ["Figma proficiency", "Design portfolio", "Current student or recent grad"],
-        isActive: true,
-    },
-]
+// Fetch active jobs from database
+async function getJobs() {
+    const jobs = await prisma.job.findMany({
+        where: { isActive: true },
+        orderBy: { createdAt: "desc" }
+    })
+    return jobs
+}
 
-export default function JobsPage() {
+export default async function JobsPage() {
+    const jobs = await getJobs()
+
     return (
         <div className="flex flex-col gap-10 pb-10">
             {/* Hero Section */}
@@ -69,49 +29,64 @@ export default function JobsPage() {
 
             {/* Job Listings */}
             <section className="container px-4 mx-auto max-w-4xl">
-                <div className="space-y-6">
-                    {jobListings.map((job) => (
-                        <article
-                            key={job.id}
-                            className="group rounded-lg border bg-card p-6 transition-all hover:shadow-lg hover:border-primary/50"
-                        >
-                            <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-                                <div className="space-y-3">
-                                    <div>
-                                        <span className="text-xs font-medium px-2 py-1 rounded-full bg-primary/10 text-primary">
-                                            {job.department}
-                                        </span>
-                                    </div>
-                                    <h2 className="text-xl font-semibold group-hover:text-primary transition-colors">
-                                        {job.title}
-                                    </h2>
-                                    <p className="text-muted-foreground">{job.description}</p>
+                {jobs.length === 0 ? (
+                    <div className="text-center py-16">
+                        <p className="text-muted-foreground text-lg mb-4">No open positions at the moment.</p>
+                        <p className="text-sm text-muted-foreground">Check back soon or join our community to stay updated!</p>
+                    </div>
+                ) : (
+                    <div className="space-y-6">
+                        {jobs.map((job) => (
+                            <article
+                                key={job.id}
+                                className="group rounded-lg border bg-card p-6 transition-all hover:shadow-lg hover:border-primary/50"
+                            >
+                                <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                                    <div className="space-y-3">
+                                        <div>
+                                            <span className="text-xs font-medium px-2 py-1 rounded-full bg-primary/10 text-primary">
+                                                {job.type || "Full-time"}
+                                            </span>
+                                        </div>
+                                        <h2 className="text-xl font-semibold group-hover:text-primary transition-colors">
+                                            {job.title}
+                                        </h2>
+                                        <p className="text-muted-foreground line-clamp-2">
+                                            {job.description.substring(0, 200)}...
+                                        </p>
 
-                                    <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-                                        <div className="flex items-center gap-1">
-                                            <MapPin className="h-4 w-4" />
-                                            <span>{job.location}</span>
+                                        <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+                                            {job.location && (
+                                                <div className="flex items-center gap-1">
+                                                    <MapPin className="h-4 w-4" />
+                                                    <span>{job.location}</span>
+                                                </div>
+                                            )}
+                                            {job.type && (
+                                                <div className="flex items-center gap-1">
+                                                    <Briefcase className="h-4 w-4" />
+                                                    <span>{job.type}</span>
+                                                </div>
+                                            )}
+                                            {job.salary && (
+                                                <div className="flex items-center gap-1">
+                                                    <DollarSign className="h-4 w-4" />
+                                                    <span>{job.salary}</span>
+                                                </div>
+                                            )}
                                         </div>
-                                        <div className="flex items-center gap-1">
-                                            <Briefcase className="h-4 w-4" />
-                                            <span>{job.type}</span>
-                                        </div>
-                                        <div className="flex items-center gap-1">
-                                            <DollarSign className="h-4 w-4" />
-                                            <span>{job.salary}</span>
-                                        </div>
+                                    </div>
+
+                                    <div className="flex-shrink-0">
+                                        <Link href={`/jobs/${job.slug}`}>
+                                            <Button>View Details</Button>
+                                        </Link>
                                     </div>
                                 </div>
-
-                                <div className="flex-shrink-0">
-                                    <Link href={`/jobs/${job.slug}`}>
-                                        <Button>View Details</Button>
-                                    </Link>
-                                </div>
-                            </div>
-                        </article>
-                    ))}
-                </div>
+                            </article>
+                        ))}
+                    </div>
+                )}
             </section>
 
             {/* Benefits Section */}

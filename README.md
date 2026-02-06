@@ -17,37 +17,38 @@ A modern, full-stack website for a verified developer organization built with Ne
 
 | Feature | Description |
 |---------|-------------|
-| **Home Page** | Hero section with gradient effects, stats, and session-aware CTAs |
-| **About Page** | Team section showcasing 8 developers with portfolio links |
+| **Home Page** | Hero section with gradient effects, stats, session-aware CTAs, and FAQ link |
+| **About Page** | Team values showcase with "Meet the Team" button |
+| **Team Page** | Dedicated page showcasing all 8 developers with portfolio links |
 | **Services Page** | Company services overview with working contact button |
-| **Blog** | Blog listing and detail pages |
-| **Jobs** | Job listings with detail pages and application forms |
+| **Blog** | Database-connected blog listing and detail pages |
+| **Jobs** | Database-connected job listings with detail pages and application forms |
 | **Developer Profiles** | Individual developer profile pages |
-| **Contact Page** | Contact form with validation |
-| **GitHub OAuth** | Full authentication with NextAuth.js v5 + GitHub |
+| **Contact Page** | Working contact form with database storage and FAQ section |
+| **FAQ Section** | Interactive accordion-style FAQs on contact page |
+| **CMS API** | Full CRUD API for posts and jobs with role-based access control |
+| **GitHub + Google OAuth** | Full authentication with NextAuth.js v5 |
 | **Session Handling** | User avatar, name, and logout in navbar |
 | **Dark/Light Theme** | Theme toggle with system preference detection |
 | **Mobile Navigation** | Responsive hamburger menu |
 | **Footer** | Navigation links and social icons |
+| **Database** | PostgreSQL with Neon, Prisma ORM with all models |
 
-### 🔧 Remaining (Backend Integration)
+### 🔧 Remaining
 
 | Feature | Status |
 |---------|--------|
-| Database Setup | Prisma schema ready, needs migration |
-| Contact Form Backend | Needs email service integration |
-| Dynamic Blog Posts | Currently using placeholder data |
-| Dynamic Job Listings | Currently using placeholder data |
-| Admin Dashboard/CMS | Not implemented |
-| Image Uploads | Not implemented |
+| Admin Dashboard/CMS | UI being built by team member |
+| Email Notifications | For contact form submissions |
+| Image Uploads | For blog posts |
 
 ## 🛠️ Tech Stack
 
 - **Framework:** Next.js 16 (App Router)
 - **Language:** TypeScript
 - **Styling:** Tailwind CSS 4
-- **Database:** PostgreSQL with Prisma ORM
-- **Authentication:** NextAuth.js v5
+- **Database:** PostgreSQL (Neon) with Prisma ORM
+- **Authentication:** NextAuth.js v5 (GitHub + Google OAuth)
 - **UI Components:** Radix UI
 - **Icons:** Lucide React
 - **Theme:** next-themes
@@ -64,6 +65,9 @@ cd Team-Website
 # Install dependencies
 npm install
 
+# Push database schema
+npx prisma db push
+
 # Run development server
 npm run dev
 ```
@@ -75,23 +79,35 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 ```
 Team-Website/
 ├── app/                    # Next.js App Router pages
+│   ├── api/               # API routes (posts, jobs, contact)
 │   ├── about/             # About page
 │   ├── blog/              # Blog listing & [slug] detail
-│   ├── contact/           # Contact form
+│   ├── contact/           # Contact form with FAQs
 │   ├── developer/         # Developer profiles [username]
 │   ├── jobs/              # Job listings & [slug] detail
 │   ├── join/              # Signup page
 │   ├── login/             # Login page
 │   ├── services/          # Services page
+│   ├── team/              # Team page
 │   └── page.tsx           # Home page
 ├── components/
 │   ├── layout/            # Navbar, Footer
 │   ├── marketing/         # Hero, Features, Team
 │   └── ui/                # Button, Input, ThemeToggle
-├── lib/                   # Utilities
+├── lib/                   # Utilities (prisma, auth-check)
 ├── prisma/                # Database schema
 └── public/                # Static assets
 ```
+
+## 🔌 API Endpoints
+
+| Endpoint | Methods | Auth | Description |
+|----------|---------|------|-------------|
+| `/api/posts` | GET, POST | GET: public, POST: admin/editor | Blog posts |
+| `/api/posts/[id]` | GET, PUT, DELETE | Varies by method | Individual post |
+| `/api/jobs` | GET, POST | GET: public, POST: admin | Job listings |
+| `/api/jobs/[id]` | GET, PUT, DELETE | Admin only for mutations | Individual job |
+| `/api/contact` | GET, POST | GET: admin, POST: public | Contact messages |
 
 ## 👥 Team
 
@@ -106,64 +122,28 @@ Team-Website/
 | Taimoor Shahzad | Developer | Coming Soon |
 | Adil Ali | Developer | Coming Soon |
 
-## 🌐 Free Hosting Recommendations
-
-### Frontend (Recommended: Vercel)
-
-| Platform | Free Tier |
-|----------|-----------|
-| **Vercel** ⭐ | Best for Next.js, automatic deployments, custom domains |
-| Netlify | Good alternative, 100GB bandwidth/month |
-| Cloudflare Pages | Unlimited bandwidth, fast CDN |
-
-### Database (When Ready)
-
-| Service | Free Tier |
-|---------|-----------|
-| **Neon** ⭐ | PostgreSQL, 0.5GB storage, always free |
-| Supabase | PostgreSQL, 500MB, auth included |
-| PlanetScale | MySQL, 5GB, serverless |
-
-### Authentication
-
-| Service | Free Tier |
-|---------|-----------|
-| **NextAuth.js** ⭐ | Self-hosted, free with GitHub/Google OAuth |
-| Clerk | 10K MAU free |
-
-### Email (For Contact Form)
-
-| Service | Free Tier |
-|---------|-----------|
-| **Resend** ⭐ | 3,000 emails/month |
-| SendGrid | 100 emails/day |
-
 ## 🚀 Deployment to Vercel
 
 1. Push code to GitHub
 2. Go to [vercel.com](https://vercel.com)
 3. Import your GitHub repository
-4. Vercel auto-detects Next.js settings
+4. Add environment variables
 5. Click Deploy!
-
-```bash
-# Or use Vercel CLI
-npm i -g vercel
-vercel
-```
 
 ## 📝 Environment Variables
 
-Create a `.env` file for local development:
+Create a `.env` file:
 
 ```env
-# Database (when ready)
+# Database
 DATABASE_URL="postgresql://..."
 
-# NextAuth (when ready)
+# NextAuth
 AUTH_SECRET="your-secret"
 AUTH_GITHUB_ID="..."
 AUTH_GITHUB_SECRET="..."
+AUTH_GOOGLE_ID="..."
+AUTH_GOOGLE_SECRET="..."
 ```
 
 ## 📄 License

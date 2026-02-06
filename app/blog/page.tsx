@@ -1,52 +1,35 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Calendar, Clock, User } from "lucide-react"
+import { Calendar, Clock, User, PenSquare } from "lucide-react"
+import { prisma } from "@/lib/prisma"
+import { auth } from "@/auth"
 
-// Placeholder blog posts (would come from database in production)
-const blogPosts = [
-    {
-        id: "1",
-        slug: "getting-started-with-nextjs-14",
-        title: "Getting Started with Next.js 14",
-        excerpt: "A comprehensive guide to building modern web applications with Next.js 14 and the new App Router.",
-        author: "Alex Johnson",
-        publishedAt: "2026-01-15",
-        readTime: "8 min read",
-        image: "/blog/nextjs.jpg",
-    },
-    {
-        id: "2",
-        slug: "building-scalable-apis-with-prisma",
-        title: "Building Scalable APIs with Prisma",
-        excerpt: "Learn how to design and implement robust database schemas using Prisma ORM for your Node.js applications.",
-        author: "Sarah Chen",
-        publishedAt: "2026-01-20",
-        readTime: "12 min read",
-        image: "/blog/prisma.jpg",
-    },
-    {
-        id: "3",
-        slug: "authentication-best-practices-2026",
-        title: "Authentication Best Practices in 2026",
-        excerpt: "Modern approaches to securing your applications, from JWTs to NextAuth and passkeys.",
-        author: "Mike Williams",
-        publishedAt: "2026-01-28",
-        readTime: "10 min read",
-        image: "/blog/auth.jpg",
-    },
-    {
-        id: "4",
-        slug: "typescript-advanced-patterns",
-        title: "TypeScript Advanced Patterns",
-        excerpt: "Explore advanced TypeScript patterns including generics, utility types, and type guards.",
-        author: "Emily Davis",
-        publishedAt: "2026-02-01",
-        readTime: "15 min read",
-        image: "/blog/typescript.jpg",
-    },
-]
+// Fetch published posts from database
+async function getPosts() {
+    const posts = await prisma.post.findMany({
+        where: { status: "PUBLISHED" },
+        include: {
+            author: {
+                select: { name: true, image: true }
+            }
+        },
+        orderBy: { publishedAt: "desc" }
+    })
+    return posts
+}
 
-export default function BlogPage() {
+// Calculate read time based on content length
+function getReadTime(content: string) {
+    const wordsPerMinute = 200
+    const wordCount = content.split(/\s+/).length
+    const minutes = Math.ceil(wordCount / wordsPerMinute)
+    return `${minutes} min read`
+}
+
+export default async function BlogPage() {
+    const posts = await getPosts()
+    const session = await auth()
+
     return (
         <div className="flex flex-col gap-10 pb-10">
             {/* Hero Section */}
@@ -61,57 +44,88 @@ export default function BlogPage() {
 
             {/* Blog Posts Grid */}
             <section className="container px-4 mx-auto max-w-7xl">
-                <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-                    {blogPosts.map((post) => (
-                        <article
-                            key={post.id}
-                            className="group rounded-lg border bg-card overflow-hidden transition-all hover:shadow-lg"
-                        >
-                            {/* Image Placeholder */}
-                            <div className="aspect-video bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
-                                <span className="text-2xl font-bold text-primary/30">DevOrg</span>
-                            </div>
+                {posts.length === 0 ? (
+                    <div className="text-center py-16">
+                        <p className="text-muted-foreground text-lg mb-4">No blog posts yet.</p>
+                        <p className="text-sm text-muted-foreground">Check back soon for updates!</p>
+                    </div>
+                ) : (
+                    <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+                        {posts.map((post) => (
+                            <article
+                                key={post.id}
+                                className="group rounded-lg border bg-card overflow-hidden transition-all hover:shadow-lg"
+                            >
+                                {/* Image Placeholder */}
+                                <div className="aspect-video bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+                                    {post.image ? (
+                                        <img
+                                            src={post.image}
+                                            alt={post.title}
+                                            className="h-full w-full object-cover"
+                                        />
+                                    ) : (
+                                        <span className="text-2xl font-bold text-primary/30">DevOrg</span>
+                                    )}
+                                </div>
 
-                            <div className="p-6">
-                                <Link href={`/blog/${post.slug}`}>
-                                    <h2 className="text-xl font-semibold mb-2 group-hover:text-primary transition-colors">
-                                        {post.title}
-                                    </h2>
-                                </Link>
-                                <p className="text-muted-foreground mb-4 line-clamp-2">
-                                    {post.excerpt}
-                                </p>
+                                <div className="p-6">
+                                    <Link href={`/blog/${post.slug}`}>
+                                        <h2 className="text-xl font-semibold mb-2 group-hover:text-primary transition-colors">
+                                            {post.title}
+                                        </h2>
+                                    </Link>
+                                    <p className="text-muted-foreground mb-4 line-clamp-2">
+                                        {post.excerpt || post.content.substring(0, 150) + "..."}
+                                    </p>
 
-                                <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-                                    <div className="flex items-center gap-1">
-                                        <User className="h-4 w-4" />
-                                        <span>{post.author}</span>
-                                    </div>
-                                    <div className="flex items-center gap-1">
-                                        <Calendar className="h-4 w-4" />
-                                        <span>{post.publishedAt}</span>
-                                    </div>
-                                    <div className="flex items-center gap-1">
-                                        <Clock className="h-4 w-4" />
-                                        <span>{post.readTime}</span>
+                                    <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+                                        <div className="flex items-center gap-1">
+                                            <User className="h-4 w-4" />
+                                            <span>{post.author?.name || "Unknown"}</span>
+                                        </div>
+                                        <div className="flex items-center gap-1">
+                                            <Calendar className="h-4 w-4" />
+                                            <span>{post.publishedAt?.toLocaleDateString() || "Draft"}</span>
+                                        </div>
+                                        <div className="flex items-center gap-1">
+                                            <Clock className="h-4 w-4" />
+                                            <span>{getReadTime(post.content)}</span>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        </article>
-                    ))}
-                </div>
+                            </article>
+                        ))}
+                    </div>
+                )}
             </section>
 
-            {/* CTA Section */}
+            {/* CTA Section - Show different content based on auth status */}
             <section className="container py-12 md:py-24 mx-auto text-center">
-                <h2 className="text-3xl font-bold mb-4">Want to contribute?</h2>
-                <p className="text-muted-foreground mb-6 max-w-lg mx-auto">
-                    If you&apos;re a verified developer, you can share your knowledge with our community.
-                </p>
-                <Link href="/join">
-                    <Button size="lg">Become a Contributor</Button>
-                </Link>
+                {session?.user ? (
+                    <>
+                        <h2 className="text-3xl font-bold mb-4">Ready to share your knowledge?</h2>
+                        <p className="text-muted-foreground mb-6 max-w-lg mx-auto">
+                            You&apos;re logged in! The admin panel for writing posts is coming soon.
+                        </p>
+                        <Button size="lg" disabled className="gap-2">
+                            <PenSquare className="h-5 w-5" />
+                            Write a Post (Coming Soon)
+                        </Button>
+                    </>
+                ) : (
+                    <>
+                        <h2 className="text-3xl font-bold mb-4">Want to contribute?</h2>
+                        <p className="text-muted-foreground mb-6 max-w-lg mx-auto">
+                            If you&apos;re a verified developer, you can share your knowledge with our community.
+                        </p>
+                        <Link href="/login">
+                            <Button size="lg">Login to Contribute</Button>
+                        </Link>
+                    </>
+                )}
             </section>
         </div>
     )
 }
+

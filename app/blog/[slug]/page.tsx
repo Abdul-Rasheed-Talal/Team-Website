@@ -1,60 +1,15 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, Calendar, Clock, User, Share2 } from "lucide-react"
+import { prisma } from "@/lib/prisma"
+import { notFound } from "next/navigation"
 
-// This would normally fetch from database based on slug
-const getPostBySlug = (slug: string) => {
-    const posts: Record<string, {
-        title: string
-        content: string
-        author: string
-        authorBio: string
-        publishedAt: string
-        readTime: string
-    }> = {
-        "getting-started-with-nextjs-14": {
-            title: "Getting Started with Next.js 14",
-            content: `
-## Introduction
-
-Next.js 14 introduces several groundbreaking features that make building modern web applications easier than ever. In this comprehensive guide, we'll explore the new App Router, Server Components, and more.
-
-## The App Router
-
-The App Router is a new paradigm for building Next.js applications. It uses React Server Components by default, providing a more intuitive way to build layouts and pages.
-
-### Key Features
-
-- **Server Components**: Components render on the server by default, reducing client-side JavaScript
-- **Streaming**: Content is streamed to the client as it becomes available
-- **Nested Layouts**: Create persistent layouts that don't re-render
-
-## Getting Started
-
-First, create a new Next.js project:
-
-\`\`\`bash
-npx create-next-app@latest my-app
-\`\`\`
-
-Then, navigate to your project and start the development server:
-
-\`\`\`bash
-cd my-app
-npm run dev
-\`\`\`
-
-## Conclusion
-
-Next.js 14 represents a significant step forward in web development. By embracing server components and the new app router, you can build faster, more scalable applications.
-            `,
-            author: "Alex Johnson",
-            authorBio: "Senior Developer at DevOrg",
-            publishedAt: "2026-01-15",
-            readTime: "8 min read",
-        },
-    }
-    return posts[slug] || null
+// Calculate read time based on content length
+function getReadTime(content: string) {
+    const wordsPerMinute = 200
+    const wordCount = content.split(/\s+/).length
+    const minutes = Math.ceil(wordCount / wordsPerMinute)
+    return `${minutes} min read`
 }
 
 interface BlogPostPageProps {
@@ -63,18 +18,23 @@ interface BlogPostPageProps {
 
 export default async function BlogPostPage({ params }: BlogPostPageProps) {
     const { slug } = await params
-    const post = getPostBySlug(slug)
 
-    if (!post) {
-        return (
-            <div className="container py-24 mx-auto max-w-4xl px-4 text-center">
-                <h1 className="text-2xl font-bold mb-4">Post Not Found</h1>
-                <p className="text-muted-foreground mb-6">The blog post you&apos;re looking for doesn&apos;t exist.</p>
-                <Link href="/blog">
-                    <Button>Back to Blog</Button>
-                </Link>
-            </div>
-        )
+    const post = await prisma.post.findUnique({
+        where: { slug },
+        include: {
+            author: {
+                select: { name: true, image: true },
+                include: {
+                    profile: {
+                        select: { title: true }
+                    }
+                }
+            }
+        }
+    })
+
+    if (!post || post.status !== "PUBLISHED") {
+        notFound()
     }
 
     return (
@@ -96,28 +56,44 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
                     <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground mb-6">
                         <div className="flex items-center gap-2">
-                            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                                <User className="h-5 w-5 text-primary" />
-                            </div>
+                            {post.author?.image ? (
+                                <img
+                                    src={post.author.image}
+                                    alt={post.author.name || "Author"}
+                                    className="h-10 w-10 rounded-full object-cover"
+                                />
+                            ) : (
+                                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                                    <User className="h-5 w-5 text-primary" />
+                                </div>
+                            )}
                             <div>
-                                <p className="font-medium text-foreground">{post.author}</p>
-                                <p className="text-xs">{post.authorBio}</p>
+                                <p className="font-medium text-foreground">{post.author?.name || "Unknown Author"}</p>
+                                <p className="text-xs">{(post.author as any)?.profile?.title || "Developer at DevOrg"}</p>
                             </div>
                         </div>
                         <div className="flex items-center gap-1">
                             <Calendar className="h-4 w-4" />
-                            <span>{post.publishedAt}</span>
+                            <span>{post.publishedAt?.toLocaleDateString()}</span>
                         </div>
                         <div className="flex items-center gap-1">
                             <Clock className="h-4 w-4" />
-                            <span>{post.readTime}</span>
+                            <span>{getReadTime(post.content)}</span>
                         </div>
                     </div>
 
-                    {/* Featured Image Placeholder */}
-                    <div className="aspect-video w-full rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center mb-8">
-                        <span className="text-4xl font-bold text-primary/30">DevOrg</span>
-                    </div>
+                    {/* Featured Image */}
+                    {post.image ? (
+                        <img
+                            src={post.image}
+                            alt={post.title}
+                            className="aspect-video w-full rounded-lg object-cover mb-8"
+                        />
+                    ) : (
+                        <div className="aspect-video w-full rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center mb-8">
+                            <span className="text-4xl font-bold text-primary/30">DevOrg</span>
+                        </div>
+                    )}
                 </header>
 
                 {/* Article Content */}

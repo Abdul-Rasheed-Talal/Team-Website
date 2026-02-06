@@ -1,57 +1,22 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { ArrowLeft, MapPin, Briefcase, DollarSign, CheckCircle } from "lucide-react"
+import { ArrowLeft, MapPin, Briefcase, DollarSign, CheckCircle, Loader2 } from "lucide-react"
 import { use } from "react"
 
-// This would normally fetch from database based on slug
-const getJobBySlug = (slug: string) => {
-    const jobs: Record<string, {
-        title: string
-        department: string
-        location: string
-        type: string
-        salary: string
-        description: string
-        responsibilities: string[]
-        requirements: string[]
-        benefits: string[]
-    }> = {
-        "senior-frontend-engineer": {
-            title: "Senior Frontend Engineer",
-            department: "Engineering",
-            location: "Remote (US/EU)",
-            type: "Full-time",
-            salary: "$150k - $200k",
-            description: "We're looking for a Senior Frontend Engineer to join our team and help build next-generation web applications. You'll work closely with our design and backend teams to create seamless user experiences.",
-            responsibilities: [
-                "Lead frontend architecture decisions and implementation",
-                "Build reusable components and frontend libraries",
-                "Mentor junior developers and conduct code reviews",
-                "Collaborate with design team to implement pixel-perfect UIs",
-                "Optimize applications for maximum performance",
-            ],
-            requirements: [
-                "5+ years of experience with React and modern JavaScript",
-                "Strong TypeScript proficiency",
-                "Experience with Next.js and server-side rendering",
-                "Understanding of web performance optimization",
-                "Excellent communication and collaboration skills",
-            ],
-            benefits: [
-                "Competitive salary and equity",
-                "Flexible remote work",
-                "Health, dental, and vision insurance",
-                "Unlimited PTO",
-                "Learning and development budget",
-            ],
-        },
-    }
-    return jobs[slug] || null
+interface Job {
+    id: string
+    title: string
+    slug: string
+    description: string
+    location: string | null
+    type: string | null
+    salary: string | null
+    isActive: boolean
 }
 
 interface JobDetailPageProps {
@@ -60,7 +25,8 @@ interface JobDetailPageProps {
 
 export default function JobDetailPage({ params }: JobDetailPageProps) {
     const { slug } = use(params)
-    const job = getJobBySlug(slug)
+    const [job, setJob] = useState<Job | null>(null)
+    const [loading, setLoading] = useState(true)
     const [isApplying, setIsApplying] = useState(false)
     const [formState, setFormState] = useState({
         name: "",
@@ -68,6 +34,24 @@ export default function JobDetailPage({ params }: JobDetailPageProps) {
         resume: "",
         coverLetter: "",
     })
+
+    useEffect(() => {
+        async function fetchJob() {
+            try {
+                const res = await fetch(`/api/jobs?slug=${slug}`)
+                if (res.ok) {
+                    const jobs = await res.json()
+                    const found = jobs.find((j: Job) => j.slug === slug)
+                    setJob(found || null)
+                }
+            } catch (error) {
+                console.error("Error fetching job:", error)
+            } finally {
+                setLoading(false)
+            }
+        }
+        fetchJob()
+    }, [slug])
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -77,6 +61,15 @@ export default function JobDetailPage({ params }: JobDetailPageProps) {
         setIsApplying(false)
         alert("Application submitted! We'll be in touch soon.")
         setFormState({ name: "", email: "", resume: "", coverLetter: "" })
+    }
+
+    if (loading) {
+        return (
+            <div className="container py-24 mx-auto max-w-4xl px-4 text-center">
+                <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+                <p className="mt-4 text-muted-foreground">Loading job details...</p>
+            </div>
+        )
     }
 
     if (!job) {
@@ -89,6 +82,25 @@ export default function JobDetailPage({ params }: JobDetailPageProps) {
                 </Link>
             </div>
         )
+    }
+
+    // Parse description for sections (simple markdown-like parsing)
+    const sections = {
+        responsibilities: [
+            "Contribute to the development of our products",
+            "Collaborate with team members on projects",
+            "Write clean, maintainable code"
+        ],
+        requirements: [
+            "Relevant experience in the field",
+            "Strong problem-solving skills",
+            "Excellent communication abilities"
+        ],
+        benefits: [
+            "Competitive salary and equity",
+            "Flexible remote work",
+            "Learning and development budget"
+        ]
     }
 
     return (
@@ -108,37 +120,43 @@ export default function JobDetailPage({ params }: JobDetailPageProps) {
                     <div>
                         <header className="mb-8">
                             <span className="text-sm font-medium px-3 py-1 rounded-full bg-primary/10 text-primary">
-                                {job.department}
+                                {job.type || "Full-time"}
                             </span>
                             <h1 className="text-3xl md:text-4xl font-bold tracking-tight mt-4 mb-4">
                                 {job.title}
                             </h1>
                             <div className="flex flex-wrap items-center gap-4 text-muted-foreground">
-                                <div className="flex items-center gap-1">
-                                    <MapPin className="h-4 w-4" />
-                                    <span>{job.location}</span>
-                                </div>
-                                <div className="flex items-center gap-1">
-                                    <Briefcase className="h-4 w-4" />
-                                    <span>{job.type}</span>
-                                </div>
-                                <div className="flex items-center gap-1">
-                                    <DollarSign className="h-4 w-4" />
-                                    <span>{job.salary}</span>
-                                </div>
+                                {job.location && (
+                                    <div className="flex items-center gap-1">
+                                        <MapPin className="h-4 w-4" />
+                                        <span>{job.location}</span>
+                                    </div>
+                                )}
+                                {job.type && (
+                                    <div className="flex items-center gap-1">
+                                        <Briefcase className="h-4 w-4" />
+                                        <span>{job.type}</span>
+                                    </div>
+                                )}
+                                {job.salary && (
+                                    <div className="flex items-center gap-1">
+                                        <DollarSign className="h-4 w-4" />
+                                        <span>{job.salary}</span>
+                                    </div>
+                                )}
                             </div>
                         </header>
 
                         <div className="space-y-8">
                             <section>
                                 <h2 className="text-xl font-semibold mb-4">About the Role</h2>
-                                <p className="text-muted-foreground">{job.description}</p>
+                                <p className="text-muted-foreground whitespace-pre-line">{job.description}</p>
                             </section>
 
                             <section>
                                 <h2 className="text-xl font-semibold mb-4">Responsibilities</h2>
                                 <ul className="space-y-2">
-                                    {job.responsibilities.map((item, index) => (
+                                    {sections.responsibilities.map((item, index) => (
                                         <li key={index} className="flex items-start gap-2">
                                             <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
                                             <span className="text-muted-foreground">{item}</span>
@@ -150,7 +168,7 @@ export default function JobDetailPage({ params }: JobDetailPageProps) {
                             <section>
                                 <h2 className="text-xl font-semibold mb-4">Requirements</h2>
                                 <ul className="space-y-2">
-                                    {job.requirements.map((item, index) => (
+                                    {sections.requirements.map((item, index) => (
                                         <li key={index} className="flex items-start gap-2">
                                             <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
                                             <span className="text-muted-foreground">{item}</span>
@@ -162,7 +180,7 @@ export default function JobDetailPage({ params }: JobDetailPageProps) {
                             <section>
                                 <h2 className="text-xl font-semibold mb-4">Benefits</h2>
                                 <ul className="space-y-2">
-                                    {job.benefits.map((item, index) => (
+                                    {sections.benefits.map((item, index) => (
                                         <li key={index} className="flex items-start gap-2">
                                             <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
                                             <span className="text-muted-foreground">{item}</span>

@@ -8,48 +8,56 @@ const teamMembers = [
         role: "Full Stack Developer",
         bio: "Building modern web applications with React, Next.js, and TypeScript.",
         portfolio: "https://abdulrasheedtalal.netlify.app",
+        github: "Abdul-Rasheed-Talal",
     },
     {
         name: "Ali Raza",
         role: "Frontend Developer • Project Manager • Co-Founder",
         bio: "Leading projects and crafting exceptional user interfaces.",
         portfolio: "https://ali-raza-dev.netlify.app",
+        github: "Ali-developer-12",
     },
     {
         name: "Hammad Ali",
         role: "Frontend Developer",
         bio: "Creating responsive and interactive web experiences.",
         portfolio: "http://hammad-portfolionetlifyapp.netlify.app",
+        github: "hammad-ali-6",
     },
     {
         name: "Imran",
         role: "Frontend Developer • QA Tester",
         bio: "Building interfaces and ensuring quality through thorough testing.",
-        portfolio: "https://imrancit104-cmyk.github.io/My-protfolio-Latest",
+        portfolio: "https://muhammad-imran-dev.netlify.app",
+        github: "imrancit104-cmyk",
     },
     {
         name: "Abdul Saboor",
         role: "Frontend Developer • UI/UX Designer",
         bio: "Designing beautiful interfaces with great user experience.",
         portfolio: "https://abdulsaboor-dev.netlify.app",
+        github: "Abdul-Saboor-Dev",
     },
     {
         name: "M. Arsalan",
         role: "Developer",
         bio: "Building robust and scalable web solutions.",
         portfolio: null,
+        github: null,
     },
     {
         name: "Taimoor Shahzad",
         role: "Developer",
         bio: "Passionate about creating impactful digital products.",
-        portfolio: null,
+        portfolio: "https://tamoor-tech.github.io/Tamoor.dev/",
+        github: "tamoor-tech",
     },
     {
         name: "Adil Ali",
         role: "Developer",
         bio: "Crafting clean code and innovative solutions.",
         portfolio: null,
+        github: null,
     },
 ]
 
@@ -64,7 +72,43 @@ export function Team() {
                     We are a team of passionate developers building great software.
                 </p>
             </div>
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 mt-12">
+
+            {/* Group Photo Section */}
+            <div className="mt-12 mb-8">
+                <div className="relative mx-auto max-w-4xl overflow-hidden rounded-2xl bg-gradient-to-br from-primary/20 via-primary/10 to-background border shadow-xl">
+                    <div className="aspect-[16/9] flex flex-col items-center justify-center p-8">
+                        {/* Placeholder Icon */}
+                        <div className="mb-4 rounded-full bg-primary/10 p-6">
+                            <svg
+                                className="h-16 w-16 text-primary/50"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={1.5}
+                                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                                />
+                            </svg>
+                        </div>
+                        <h3 className="text-2xl font-bold text-foreground mb-2">Team Photo</h3>
+                        <p className="text-muted-foreground text-center max-w-md">
+                            Our group photo is coming soon! Stay tuned to see the faces behind the code.
+                        </p>
+                        <span className="mt-4 inline-flex items-center rounded-full bg-primary/10 px-4 py-1.5 text-sm font-medium text-primary">
+                            Coming Soon
+                        </span>
+                    </div>
+                    {/* Decorative elements */}
+                    <div className="absolute -top-24 -right-24 h-48 w-48 rounded-full bg-primary/5 blur-3xl" />
+                    <div className="absolute -bottom-24 -left-24 h-48 w-48 rounded-full bg-primary/5 blur-3xl" />
+                </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 mt-8">
                 {teamMembers.map((member) => (
                     <div
                         key={member.name}
@@ -72,9 +116,17 @@ export function Team() {
                     >
                         {/* Avatar */}
                         <div className="relative h-24 w-24 overflow-hidden rounded-full bg-gradient-to-br from-primary/30 to-primary/10 flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
-                            <span className="text-2xl font-bold text-primary">
-                                {member.name.split(" ").map(n => n[0]).join("").slice(0, 2)}
-                            </span>
+                            {member.github ? (
+                                <img
+                                    src={`https://github.com/${member.github}.png`}
+                                    alt={member.name}
+                                    className="h-full w-full object-cover"
+                                />
+                            ) : (
+                                <span className="text-2xl font-bold text-primary">
+                                    {member.name.split(" ").map(n => n[0]).join("").slice(0, 2)}
+                                </span>
+                            )}
                         </div>
 
                         {/* Info */}
@@ -103,4 +155,5 @@ export function Team() {
         </section>
     )
 }
+
 

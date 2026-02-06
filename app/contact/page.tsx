@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Mail, MapPin, Phone } from "lucide-react"
+import { Mail, MapPin, Phone, CheckCircle2, AlertCircle } from "lucide-react"
 
 export default function ContactPage() {
     const [formState, setFormState] = useState({
@@ -14,16 +14,37 @@ export default function ContactPage() {
         message: "",
     })
     const [isSubmitting, setIsSubmitting] = useState(false)
+    const [submitStatus, setSubmitStatus] = useState<"idle" | "success" | "error">("idle")
+    const [errorMessage, setErrorMessage] = useState("")
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setIsSubmitting(true)
-        // Simulate form submission
-        await new Promise((resolve) => setTimeout(resolve, 1000))
-        setIsSubmitting(false)
-        alert("Message sent! We'll get back to you soon.")
-        setFormState({ name: "", email: "", subject: "", message: "" })
+        setSubmitStatus("idle")
+
+        try {
+            const res = await fetch("/api/contact", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(formState)
+            })
+
+            const data = await res.json()
+
+            if (!res.ok) {
+                throw new Error(data.error || "Failed to send message")
+            }
+
+            setSubmitStatus("success")
+            setFormState({ name: "", email: "", subject: "", message: "" })
+        } catch (error) {
+            setSubmitStatus("error")
+            setErrorMessage(error instanceof Error ? error.message : "Something went wrong")
+        } finally {
+            setIsSubmitting(false)
+        }
     }
+
 
     return (
         <div className="flex flex-col gap-10 pb-10">
@@ -151,10 +172,85 @@ export default function ContactPage() {
                             <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
                                 {isSubmitting ? "Sending..." : "Send Message"}
                             </Button>
+
+                            {submitStatus === "success" && (
+                                <div className="flex items-center gap-2 p-4 rounded-lg bg-green-500/10 text-green-600 dark:text-green-400">
+                                    <CheckCircle2 className="h-5 w-5 flex-shrink-0" />
+                                    <span>Message sent successfully! We&apos;ll get back to you soon.</span>
+                                </div>
+                            )}
+
+                            {submitStatus === "error" && (
+                                <div className="flex items-center gap-2 p-4 rounded-lg bg-red-500/10 text-red-600 dark:text-red-400">
+                                    <AlertCircle className="h-5 w-5 flex-shrink-0" />
+                                    <span>{errorMessage}</span>
+                                </div>
+                            )}
                         </form>
                     </div>
+                </div>
+            </section>
+
+            {/* FAQ Section */}
+            <section id="faq" className="container px-4 mx-auto max-w-4xl py-12 md:py-24">
+                <h2 className="text-3xl font-bold text-center mb-4">Frequently Asked Questions</h2>
+                <p className="text-muted-foreground text-center mb-12 max-w-2xl mx-auto">
+                    Find answers to common questions about our organization and services.
+                </p>
+
+                <div className="space-y-4">
+                    <FAQItem
+                        question="What is DevOrg?"
+                        answer="DevOrg is a collective of verified developers working together to build innovative solutions. We bring together talented individuals who share a passion for creating great software."
+                    />
+                    <FAQItem
+                        question="How can I join the team?"
+                        answer="You can apply through our Jobs page if there are open positions. We also welcome developers to join our community through the Join page, where you can create a profile and connect with us."
+                    />
+                    <FAQItem
+                        question="Do you offer freelance services?"
+                        answer="Yes! We provide web development, mobile app development, UI/UX design, and consulting services. Visit our Services page to learn more or contact us directly."
+                    />
+                    <FAQItem
+                        question="How long does it take to get a response?"
+                        answer="We typically respond to inquiries within 24-48 business hours. For urgent matters, please indicate this in your message subject."
+                    />
+                    <FAQItem
+                        question="Can I contribute to your blog?"
+                        answer="Absolutely! If you're a verified developer on our platform, you can contribute articles to our blog. Login to your account and head to the Blog section to get started."
+                    />
                 </div>
             </section>
         </div>
     )
 }
+
+// FAQ Item Component
+function FAQItem({ question, answer }: { question: string; answer: string }) {
+    const [isOpen, setIsOpen] = useState(false)
+
+    return (
+        <div className="rounded-lg border bg-card">
+            <button
+                onClick={() => setIsOpen(!isOpen)}
+                className="flex w-full items-center justify-between p-6 text-left font-medium hover:bg-accent/50 transition-colors rounded-lg"
+            >
+                <span>{question}</span>
+                <svg
+                    className={`h-5 w-5 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+            </button>
+            {isOpen && (
+                <div className="px-6 pb-6 text-muted-foreground">
+                    {answer}
+                </div>
+            )}
+        </div>
+    )
+}
+
