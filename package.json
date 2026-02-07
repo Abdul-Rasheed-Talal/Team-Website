@@ -41,6 +41,9 @@
     "tailwindcss-animate": "^1.0.7",
     "zod": "^4.3.6"
   },
+  "overrides": {
+    "@auth/core": "0.41.1"
+  },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
