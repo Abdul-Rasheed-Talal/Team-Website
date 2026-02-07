@@ -27,21 +27,20 @@ export async function POST(req: Request) {
         // --- CASE 1: ALI RAZA OR ABDUL RASHEED (Initial Admins) ---
         if (INITIAL_ADMIN_EMAILS.includes(email)) {
             if (password === INITIAL_PASSWORD) {
-                // Verify they are in approved_admins
-                let admin = await prisma.approvedAdmin.findUnique({ where: { email } });
-
-                // If not in DB yet (should have been seeded), add them
-                if (!admin) {
-                    admin = await prisma.approvedAdmin.create({
-                        data: {
-                            email,
-                            approvedBy: 'system'
-                        }
-                    });
+                // Background attempt to sync with DB, but don't block login
+                try {
+                    const existing = await prisma.approvedAdmin.findUnique({ where: { email } });
+                    if (!existing) {
+                        await prisma.approvedAdmin.create({
+                            data: { email, approvedBy: 'system' }
+                        });
+                    }
+                } catch (dbError) {
+                    console.error("Database sync failed for initial admin, proceeding with session anyway:", dbError);
                 }
 
                 const secretPath = process.env.SECRET_ADMIN_PATH || 'admin-$ecret-P@nel';
-                await createAdminSession(admin.email);
+                await createAdminSession(email);
                 return NextResponse.json({ success: true, redirect: `/${secretPath}/dashboard` });
             } else {
                 return NextResponse.json({ success: false, message: 'Wrong password' }, { status: 401 });
