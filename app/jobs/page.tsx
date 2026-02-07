@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma"
 // Fetch active jobs from database
 async function getJobs() {
     const jobs = await prisma.job.findMany({
-        where: { isActive: true },
+        where: { status: "OPEN" },
         orderBy: { createdAt: "desc" }
     })
     return jobs

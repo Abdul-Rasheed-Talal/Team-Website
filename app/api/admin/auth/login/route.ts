@@ -2,15 +2,11 @@ import { prisma } from '@/lib/prisma';
 import { createAdminSession } from '@/lib/auth-admin';
 import { sendApprovalEmail } from '@/lib/email';
 import { NextResponse } from 'next/server';
-import bcrypt from 'bcryptjs';
 
 const INITIAL_ADMIN_EMAILS = [
-    process.env.INITIAL_ADMIN_1 || 'mabdulrasheedtalal@gmail.com',
-    process.env.INITIAL_ADMIN_2 || 'aliraza.dev.crusader@gmail.com',
-];
-
-const INITIAL_PASSWORD = process.env.INITIAL_ADMIN_PASSWORD || '@lira$heedrazatalal129';
-const APPROVAL_PASSWORD = process.env.APPROVAL_PASSWORD || '@team_website@dmim$12';
+    process.env.INITIAL_ADMIN_1,
+    process.env.INITIAL_ADMIN_2,
+].filter(Boolean) as string[];
 
 export async function POST(req: Request) {
     try {
@@ -18,28 +14,70 @@ export async function POST(req: Request) {
         const { email, password } = body;
         const ip = (req.headers.get('x-forwarded-for') ?? '127.0.0.1').split(',')[0];
 
+        // Validate environment variables
+        const initialPassword = process.env.INITIAL_ADMIN_PASSWORD;
+        const approvalPassword = process.env.APPROVAL_PASSWORD;
+        const secretPath = process.env.SECRET_ADMIN_PATH || 'admin-$ecret-P@nel';
+
+        if (!initialPassword || !approvalPassword) {
+            console.error("Missing Admin Environment Variables");
+            return NextResponse.json({ success: false, message: 'Server Configuration Error' }, { status: 500 });
+        }
+
         // Log attempt (optional but good practice)
         console.log(`Admin login attempt: ${email} from ${ip}`);
-        console.log(`Debug: INITIAL_PASSWORD length = ${INITIAL_PASSWORD?.length}`);
-        console.log(`Debug: APPROVAL_PASSWORD length = ${APPROVAL_PASSWORD?.length}`);
-        console.log(`Debug: Submitted password length = ${password?.length}`);
 
-        // --- CASE 1: ALI RAZA OR ABDUL RASHEED (Initial Admins) ---
+        // --- CASE 1: INITIAL ADMINS ---
         if (INITIAL_ADMIN_EMAILS.includes(email)) {
-            if (password === INITIAL_PASSWORD) {
-                // Background attempt to sync with DB, but don't block login
+            if (password === initialPassword) {
+                // Background attempt to sync with DB
                 try {
                     const existing = await prisma.approvedAdmin.findUnique({ where: { email } });
+
+                    // DEVICE CHECK
+                    const userAgent = (req.headers.get('user-agent') || '').toLowerCase();
+                    const isMobile = /mobile|android|iphone|ipad|ipod/.test(userAgent);
+                    const deviceType = isMobile ? 'MOBILE' : 'DESKTOP';
+
+                    let adminRecord = existing;
+
                     if (!existing) {
-                        await prisma.approvedAdmin.create({
-                            data: { email, approvedBy: 'system' }
+                        // Create new admin logic (default to DESKTOP, but for specific user set MOBILE)
+                        const isMainAdmin = email === 'mabdulrasheedtalal@gmail.com';
+                        adminRecord = await prisma.approvedAdmin.create({
+                            data: {
+                                email,
+                                approvedBy: 'system',
+                                allowedDevice: isMainAdmin ? 'MOBILE' : 'DESKTOP'
+                            }
                         });
                     }
+
+                    // Enforce Device Restriction
+                    if (adminRecord) {
+                        // Update this specific user if not set (temporary fix for existing records)
+                        if (email === 'mabdulrasheedtalal@gmail.com' && adminRecord.allowedDevice !== 'MOBILE') {
+                            adminRecord = await prisma.approvedAdmin.update({
+                                where: { email },
+                                data: { allowedDevice: 'MOBILE' }
+                            });
+                        }
+
+                        if (adminRecord.allowedDevice === 'MOBILE' && !isMobile) {
+                            return NextResponse.json({ success: false, message: 'Access Denied: You can only access from Mobile.' }, { status: 403 });
+                        }
+                        if (adminRecord.allowedDevice === 'DESKTOP' && isMobile) {
+                            return NextResponse.json({ success: false, message: 'Access Denied: You can only access from PC/Laptop.' }, { status: 403 });
+                        }
+                    }
+
                 } catch (dbError) {
-                    console.error("Database sync failed for initial admin, proceeding with session anyway:", dbError);
+                    console.error("Database sync/check failed:", dbError);
+                    // Fallback security if DB fails? Better to fail open or closed? 
+                    // Failing closed is safer for "high security".
+                    return NextResponse.json({ success: false, message: 'Security Verification Failed' }, { status: 500 });
                 }
 
-                const secretPath = process.env.SECRET_ADMIN_PATH || 'admin-$ecret-P@nel';
                 await createAdminSession(email);
                 return NextResponse.json({ success: true, redirect: `/${secretPath}/dashboard` });
             } else {
@@ -48,12 +86,24 @@ export async function POST(req: Request) {
         }
 
         // --- CASE 2: NEW USER (WAITING FOR APPROVAL) ---
-        if (password === APPROVAL_PASSWORD) {
+        if (password === approvalPassword) {
             // Check if already approved
             const isApproved = await prisma.approvedAdmin.findUnique({ where: { email } });
+
             if (isApproved) {
+                // DEVICE CHECK
+                const userAgent = (req.headers.get('user-agent') || '').toLowerCase();
+                const isMobile = /mobile|android|iphone|ipad|ipod/.test(userAgent);
+
+                if (isApproved.allowedDevice === 'MOBILE' && !isMobile) {
+                    return NextResponse.json({ success: false, message: 'Access Denied: You can only access from Mobile.' }, { status: 403 });
+                }
+                if (isApproved.allowedDevice === 'DESKTOP' && isMobile) {
+                    return NextResponse.json({ success: false, message: 'Access Denied: You can only access from PC/Laptop.' }, { status: 403 });
+                }
+
                 await createAdminSession(email);
-                return NextResponse.json({ success: true, redirect: '/admin/dashboard' });
+                return NextResponse.json({ success: true, redirect: `/${secretPath}/dashboard` });
             }
 
             // Check if already pending
@@ -64,10 +114,10 @@ export async function POST(req: Request) {
                     data: { email }
                 });
 
-                // Send email to BOTH our emails
+                // Send email to INITIAL ADMINS
                 await Promise.all(
                     INITIAL_ADMIN_EMAILS.map((adminEmail) =>
-                        sendApprovalEmail(adminEmail, email, 'registration') // Simplified ID or handle appropriately
+                        sendApprovalEmail(adminEmail, email, 'registration')
                     )
                 );
             }

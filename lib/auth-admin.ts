@@ -7,6 +7,10 @@ const SECRET_KEY = process.env.ADMIN_SESSION_SECRET || 'secret';
 const key = new TextEncoder().encode(SECRET_KEY);
 
 export async function createAdminSession(adminEmail: string) {
+    if (!process.env.ADMIN_SESSION_SECRET) {
+        console.warn("Warning: ADMIN_SESSION_SECRET is not set, using default insecure secret.");
+    }
+
     const expires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 1 day
     const session = await new SignJWT({ adminEmail })
         .setProtectedHeader({ alg: 'HS256' })

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Mail, MapPin, Phone, CheckCircle2, AlertCircle } from "lucide-react"
+import { submitContact } from "@/app/actions/contact"
 
 export default function ContactPage() {
     const [formState, setFormState] = useState({
@@ -22,17 +23,17 @@ export default function ContactPage() {
         setIsSubmitting(true)
         setSubmitStatus("idle")
 
+        const formData = new FormData()
+        formData.append('name', formState.name)
+        formData.append('email', formState.email)
+        formData.append('subject', formState.subject)
+        formData.append('message', formState.message)
+
         try {
-            const res = await fetch("/api/contact", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(formState)
-            })
+            const result = await submitContact(formData)
 
-            const data = await res.json()
-
-            if (!res.ok) {
-                throw new Error(data.error || "Failed to send message")
+            if (result.error) {
+                throw new Error(result.error)
             }
 
             setSubmitStatus("success")

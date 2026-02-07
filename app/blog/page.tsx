@@ -11,6 +11,9 @@ async function getPosts() {
         include: {
             author: {
                 select: { name: true, image: true }
+            },
+            adminAuthor: {
+                select: { email: true }
             }
         },
         orderBy: { publishedAt: "desc" }
@@ -51,51 +54,56 @@ export default async function BlogPage() {
                     </div>
                 ) : (
                     <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-                        {posts.map((post) => (
-                            <article
-                                key={post.id}
-                                className="group rounded-lg border bg-card overflow-hidden transition-all hover:shadow-lg"
-                            >
-                                {/* Image Placeholder */}
-                                <div className="aspect-video bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
-                                    {post.image ? (
-                                        <img
-                                            src={post.image}
-                                            alt={post.title}
-                                            className="h-full w-full object-cover"
-                                        />
-                                    ) : (
-                                        <span className="text-2xl font-bold text-primary/30">DevOrg</span>
-                                    )}
-                                </div>
+                        {posts.map((post) => {
+                            // Determine author name
+                            const authorName = post.author?.name || post.adminAuthor?.email?.split('@')[0] || "DevOrg Team";
 
-                                <div className="p-6">
-                                    <Link href={`/blog/${post.slug}`}>
-                                        <h2 className="text-xl font-semibold mb-2 group-hover:text-primary transition-colors">
-                                            {post.title}
-                                        </h2>
-                                    </Link>
-                                    <p className="text-muted-foreground mb-4 line-clamp-2">
-                                        {post.excerpt || post.content.substring(0, 150) + "..."}
-                                    </p>
+                            return (
+                                <article
+                                    key={post.id}
+                                    className="group rounded-lg border bg-card overflow-hidden transition-all hover:shadow-lg"
+                                >
+                                    {/* Image Placeholder */}
+                                    <div className="aspect-video bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+                                        {post.image ? (
+                                            <img
+                                                src={post.image}
+                                                alt={post.title}
+                                                className="h-full w-full object-cover"
+                                            />
+                                        ) : (
+                                            <span className="text-2xl font-bold text-primary/30">DevOrg</span>
+                                        )}
+                                    </div>
 
-                                    <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-                                        <div className="flex items-center gap-1">
-                                            <User className="h-4 w-4" />
-                                            <span>{post.author?.name || "Unknown"}</span>
-                                        </div>
-                                        <div className="flex items-center gap-1">
-                                            <Calendar className="h-4 w-4" />
-                                            <span>{post.publishedAt?.toLocaleDateString() || "Draft"}</span>
-                                        </div>
-                                        <div className="flex items-center gap-1">
-                                            <Clock className="h-4 w-4" />
-                                            <span>{getReadTime(post.content)}</span>
+                                    <div className="p-6">
+                                        <Link href={`/blog/${post.slug}`}>
+                                            <h2 className="text-xl font-semibold mb-2 group-hover:text-primary transition-colors">
+                                                {post.title}
+                                            </h2>
+                                        </Link>
+                                        <p className="text-muted-foreground mb-4 line-clamp-2">
+                                            {post.excerpt || post.content.substring(0, 150) + "..."}
+                                        </p>
+
+                                        <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+                                            <div className="flex items-center gap-1">
+                                                <User className="h-4 w-4" />
+                                                <span className="capitalize">{authorName}</span>
+                                            </div>
+                                            <div className="flex items-center gap-1">
+                                                <Calendar className="h-4 w-4" />
+                                                <span>{post.publishedAt?.toLocaleDateString() || "Draft"}</span>
+                                            </div>
+                                            <div className="flex items-center gap-1">
+                                                <Clock className="h-4 w-4" />
+                                                <span>{getReadTime(post.content)}</span>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            </article>
-                        ))}
+                                </article>
+                            )
+                        })}
                     </div>
                 )}
             </section>

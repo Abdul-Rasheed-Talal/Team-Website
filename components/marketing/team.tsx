@@ -2,66 +2,20 @@ import Link from "next/link"
 import { ExternalLink } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
-const teamMembers = [
-    {
-        name: "Abdul Rasheed Talal",
-        role: "Full Stack Developer",
-        bio: "Building modern web applications with React, Next.js, and TypeScript.",
-        portfolio: "https://abdulrasheedtalal.netlify.app",
-        github: "Abdul-Rasheed-Talal",
-    },
-    {
-        name: "Ali Raza",
-        role: "Frontend Developer • Project Manager • Co-Founder",
-        bio: "Leading projects and crafting exceptional user interfaces.",
-        portfolio: "https://ali-raza-dev.netlify.app",
-        github: "Ali-developer-12",
-    },
-    {
-        name: "Hammad Ali",
-        role: "Frontend Developer",
-        bio: "Creating responsive and interactive web experiences.",
-        portfolio: "http://hammad-portfolionetlifyapp.netlify.app",
-        github: "hammad-ali-6",
-    },
-    {
-        name: "Imran",
-        role: "Frontend Developer • QA Tester",
-        bio: "Building interfaces and ensuring quality through thorough testing.",
-        portfolio: "https://muhammad-imran-dev.netlify.app",
-        github: "imrancit104-cmyk",
-    },
-    {
-        name: "Abdul Saboor",
-        role: "Frontend Developer • UI/UX Designer",
-        bio: "Designing beautiful interfaces with great user experience.",
-        portfolio: "https://abdulsaboor-dev.netlify.app",
-        github: "Abdul-Saboor-Dev",
-    },
-    {
-        name: "M. Arsalan",
-        role: "Developer",
-        bio: "Building robust and scalable web solutions.",
-        portfolio: null,
-        github: null,
-    },
-    {
-        name: "Taimoor Shahzad",
-        role: "Developer",
-        bio: "Passionate about creating impactful digital products.",
-        portfolio: "https://tamoor-tech.github.io/Tamoor.dev/",
-        github: "tamoor-tech",
-    },
-    {
-        name: "Adil Ali",
-        role: "Developer",
-        bio: "Crafting clean code and innovative solutions.",
-        portfolio: null,
-        github: null,
-    },
-]
+interface TeamMember {
+    id: string
+    name: string | null
+    email?: string | null
+    profile: {
+        title: string | null
+        bio: string | null
+        skills: string[]
+        github?: string | null
+        website?: string | null
+    } | null
+}
 
-export function Team() {
+export function Team({ members }: { members: TeamMember[] }) {
     return (
         <section className="container py-8 md:py-12 lg:py-24 mx-auto max-w-7xl px-4">
             <div className="mx-auto flex max-w-[58rem] flex-col items-center justify-center gap-4 text-center">
@@ -108,50 +62,56 @@ export function Team() {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 mt-8">
-                {teamMembers.map((member) => (
-                    <div
-                        key={member.name}
-                        className="group flex flex-col items-center space-y-4 rounded-lg border bg-card p-6 transition-all hover:shadow-lg hover:border-primary/50"
-                    >
-                        {/* Avatar */}
-                        <div className="relative h-24 w-24 overflow-hidden rounded-full bg-gradient-to-br from-primary/30 to-primary/10 flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
-                            {member.github ? (
-                                <img
-                                    src={`https://github.com/${member.github}.png`}
-                                    alt={member.name}
-                                    className="h-full w-full object-cover"
-                                />
+            {members.length === 0 ? (
+                <div className="text-center py-10 text-muted-foreground">
+                    No team members found.
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 mt-8">
+                    {members.map((member) => (
+                        <div
+                            key={member.id}
+                            className="group flex flex-col items-center space-y-4 rounded-lg border bg-card p-6 transition-all hover:shadow-lg hover:border-primary/50"
+                        >
+                            {/* Avatar */}
+                            <div className="relative h-24 w-24 overflow-hidden rounded-full bg-gradient-to-br from-primary/30 to-primary/10 flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
+                                {member.profile?.github ? (
+                                    <img
+                                        src={`https://github.com/${member.profile.github}.png`}
+                                        alt={member.name || 'Team Member'}
+                                        className="h-full w-full object-cover"
+                                    />
+                                ) : (
+                                    <span className="text-2xl font-bold text-primary">
+                                        {(member.name || "?").split(" ").map(n => n[0]).join("").slice(0, 2)}
+                                    </span>
+                                )}
+                            </div>
+
+                            {/* Info */}
+                            <div className="text-center space-y-2">
+                                <h3 className="text-lg font-bold">{member.name}</h3>
+                                <p className="text-sm font-medium text-primary">{member.profile?.title}</p>
+                                <p className="text-sm text-muted-foreground line-clamp-3">{member.profile?.bio}</p>
+                            </div>
+
+                            {/* Portfolio Link */}
+                            {member.profile?.website ? (
+                                <Link href={member.profile.website} target="_blank" rel="noopener noreferrer">
+                                    <Button variant="outline" size="sm" className="gap-2">
+                                        <ExternalLink className="h-4 w-4" />
+                                        View Portfolio
+                                    </Button>
+                                </Link>
                             ) : (
-                                <span className="text-2xl font-bold text-primary">
-                                    {member.name.split(" ").map(n => n[0]).join("").slice(0, 2)}
-                                </span>
+                                <Button variant="ghost" size="sm" disabled className="gap-2 opacity-50">
+                                    Coming Soon
+                                </Button>
                             )}
                         </div>
-
-                        {/* Info */}
-                        <div className="text-center space-y-2">
-                            <h3 className="text-lg font-bold">{member.name}</h3>
-                            <p className="text-sm font-medium text-primary">{member.role}</p>
-                            <p className="text-sm text-muted-foreground">{member.bio}</p>
-                        </div>
-
-                        {/* Portfolio Link */}
-                        {member.portfolio ? (
-                            <Link href={member.portfolio} target="_blank" rel="noopener noreferrer">
-                                <Button variant="outline" size="sm" className="gap-2">
-                                    <ExternalLink className="h-4 w-4" />
-                                    View Portfolio
-                                </Button>
-                            </Link>
-                        ) : (
-                            <Button variant="ghost" size="sm" disabled className="gap-2 opacity-50">
-                                Coming Soon
-                            </Button>
-                        )}
-                    </div>
-                ))}
-            </div>
+                    ))}
+                </div>
+            )}
         </section>
     )
 }

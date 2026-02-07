@@ -13,34 +13,30 @@ A modern, full-stack website for a verified developer organization built with Ne
 
 ## ✨ Features
 
+
 ### ✅ Completed
 
 | Feature | Description |
 |---------|-------------|
 | **Home Page** | Hero section with gradient effects, stats, session-aware CTAs, and FAQ link |
 | **About Page** | Team values showcase with "Meet the Team" button |
-| **Team Page** | Dedicated page showcasing all 8 developers with portfolio links |
+| **Team Page** | Dynamic page showcasing developers from database |
 | **Services Page** | Company services overview with working contact button |
-| **Blog** | Database-connected blog listing and detail pages |
-| **Jobs** | Database-connected job listings with detail pages and application forms |
+| **Blog** | Database-connected blog with Admin management |
+| **Jobs** | Database-connected job listings with Admin management |
 | **Developer Profiles** | Individual developer profile pages |
-| **Contact Page** | Working contact form with database storage and FAQ section |
-| **FAQ Section** | Interactive accordion-style FAQs on contact page |
-| **CMS API** | Full CRUD API for posts and jobs with role-based access control |
+| **Contact Page** | Working contact form with Admin message management |
+| **Admin Panel** | Secure Dashboard for Blog, Team, Jobs, and Messages |
+| **Advanced Security** | Device-restricted access (Mobile/PC) and Role-based control |
 | **GitHub + Google OAuth** | Full authentication with NextAuth.js v5 |
-| **Session Handling** | User avatar, name, and logout in navbar |
-| **Dark/Light Theme** | Theme toggle with system preference detection |
-| **Mobile Navigation** | Responsive hamburger menu |
-| **Footer** | Navigation links and social icons |
-| **Database** | PostgreSQL with Neon, Prisma ORM with all models |
+| **Theme System** | Dark/Light mode with system preference detection |
 
 ### 🔧 Remaining
 
 | Feature | Status |
 |---------|--------|
-| Admin Dashboard/CMS | UI being built by team member |
-| Email Notifications | For contact form submissions |
-| Image Uploads | For blog posts |
+| Email Notifications | Integrated with Resend (Needs template polish) |
+| Image Uploads | Pending cloud storage integration |
 
 ## 🛠️ Tech Stack
 
